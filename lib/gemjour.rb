@@ -1,6 +1,8 @@
-require "dnssd"
+require 'net/dns/mdns-sd'
 require "set"
 require "gemjour/version"
+
+  DNSSD = Net::DNS::MDNSSD
 
 Thread.abort_on_exception = true
 
@@ -96,10 +98,9 @@ show <server>
   def self.serve(name="", port=PORT)
     name = ENV['USER'] if name.empty?
 
-    tr = DNSSD::TextRecord.new
-    tr['description'] = "#{name}'s gem server"
+    description = "#{name}'s gem server"
     
-    DNSSD.register(name, SERVICE, "local", port, tr.encode) do |reply|
+    DNSSD.register(name, SERVICE, "local", port, {"description"=>description}) do |reply|
       puts "Serving gems under name '#{name}'..."
     end
 

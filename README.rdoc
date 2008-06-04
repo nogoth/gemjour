@@ -4,7 +4,7 @@ Server and install gems over Bonjour.
 
 == Installation
 
-  sudo gem install dnssd
+  sudo gem install net-mdns
   sudo gem install evanphx-gemjour --source=http://gems.github.com
 
 == Usage
