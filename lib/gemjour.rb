@@ -1,4 +1,6 @@
 require 'net/dns/mdns-sd'
+  $:.include?(File.dirname(__FILE__)) || $:.include?(File.expand_path(File.dirname(__FILE__)))
+
 require "set"
 require "gemjour/version"
 
@@ -53,7 +55,8 @@ show <server>
     host
   end
 
-  def self.list
+  def self.list(name = nil)
+    return show(name) if name
     hosts = []
 
     waiting = Thread.current
@@ -82,12 +85,41 @@ show <server>
 
     system "gem list -r --source=http://#{host.host}:#{host.port}"
   end
+  
+  def self._diff(name)
+    host = find(name)
+
+    unless host
+      puts "ERROR: Unable to find server named '#{name}'"
+      return
+    end
+    
+    require "tempfile"
+    local_gems, remote_gems = Tempfile.new("local_gems"), Tempfile.new("remote_gems")
+    local_gems.print(`gem list --no-versions --no-verbose`)
+    local_gems.close
+    remote_gems.print(`gem list --no-versions --no-verbose -r --source=http://#{host.host}:#{host.port}`)
+    remote_gems.close
+    `diff -u #{local_gems.path} #{remote_gems.path}`
+  end
+
+  def self.diff(name)
+    return unless diff = _diff(name)
+    puts diff
+  end
+  
+  def self.install_diff(name)
+    return unless gem_diff = _diff(name)
+    gem_diff.scan(/^\+([\w_\-]+)/) do |match|
+      install(name, match)
+    end
+  end
 
   def self.install(name, gem)
     host = find(name)
 
     unless host
-      puts "ERROR: Unable to find server named '#{user}'"
+      puts "ERROR: Unable to find server named '#{name}'"
       return
     end
 
